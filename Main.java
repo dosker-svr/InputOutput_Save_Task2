@@ -22,7 +22,7 @@ public class Main {
 
         deleteDatFiles("C:\\NetologyProjects\\JavaCoreNetology\\src\\InputOutput_Installation_Task1\\Games\\savegames");
 
-//        openZip("zip_1.zip", pathWithSavedGames);
+        openZip("zip_1.zip", pathWithSavedGames);
 
     }
 
