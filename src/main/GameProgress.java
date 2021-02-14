@@ -1,4 +1,4 @@
-package InputOutput_Save_Task2;
+package InputOutput_Save_Task2.src.main;
 
 import java.io.Serializable;
 
