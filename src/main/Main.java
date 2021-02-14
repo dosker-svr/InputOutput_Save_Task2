@@ -1,10 +1,7 @@
-package InputOutput_Save_Task2;
+package InputOutput_Save_Task2.src.main;
 
 import java.io.*;
-import java.io.FileFilter;
-import java.util.zip.ZipEntry;
-import java.util.zip.ZipInputStream;
-import java.util.zip.ZipOutputStream;
+import java.util.zip.*;
 
 public class Main {
     public static void main(String[] args) {
@@ -12,7 +9,8 @@ public class Main {
         GameProgress save2 = new GameProgress(70, 7, 3, 78.3);
         GameProgress save3 = new GameProgress(30, 2, 4, 101.6);
 
-        String pathWithSavedGames = "C:\\NetologyProjects\\JavaCoreNetology\\src\\InputOutput_Installation_Task1\\Games\\savegames";
+        String pre = "src\\InputOutput_Installation_Task1\\Games\\";
+        String pathWithSavedGames = pre + "savegames";
 
         saveGame(pathWithSavedGames, "save_1.dat", save1);
         saveGame(pathWithSavedGames, "save_2.dat", save2);
@@ -20,10 +18,11 @@ public class Main {
 
         zipFiles(pathWithSavedGames, "zip_1.zip");
 
-        deleteDatFiles("C:\\NetologyProjects\\JavaCoreNetology\\src\\InputOutput_Installation_Task1\\Games\\savegames");
+        deleteDatFiles(pathWithSavedGames);
 
         openZip("zip_1.zip", pathWithSavedGames);
 
+        System.out.println(openProgress(pathWithSavedGames, "save_2.dat"));
     }
 
     public static void saveGame(String pathWithSavedGames, String fileNameToSavingGame, GameProgress gameProgress) {
@@ -48,11 +47,11 @@ public class Main {
             try {
                 if (serializationSavingGame != null) {
                     serializationSavingGame.close();
-//                    System.out.println("Закрыли поток сериализации");
+                    System.out.println("Закрыли поток сериализации");
                 }
                 if (saveGameStream != null) {
                     saveGameStream.close();
-//                    System.out.println("Закрыли поток записи в файл");
+                    System.out.println("Закрыли поток записи в файл");
                 }
             } catch (IOException e) {
                 System.out.println(e.getMessage() + " - находимся в catch закрытия стримов");
@@ -78,11 +77,11 @@ public class Main {
 
             for (File file : files) {
                 FileInputStream savedFile = new FileInputStream(file);
-                byte[] bytesDirectory = new byte[savedFile.available()];
+                byte[] bytesDirectory = new byte[savedFile.available()]; //4096
                 savedFile.read(bytesDirectory);
 
                 savedFile.close();
-//                System.out.println("Закрыли поток чтения директории");
+                System.out.println("Закрыли поток чтения директории");
 
                 ZipEntry entry = new ZipEntry(file.getName());
                 zipOutputStream.putNextEntry(entry);
@@ -103,29 +102,23 @@ public class Main {
         File folderWithSavedGames = new File(pathWithSavedGames);
 //      File[] files = folderWithSavedGames.listFiles(pathname -> pathname.getName().endsWith(".dat"));
         File[] files = folderWithSavedGames.listFiles(new FileFilter() {
-                                                            @Override
-                                                            public boolean accept(File pathname) {
-                                                                return pathname.getName().endsWith(".dat");
-                                                            }
+            @Override
+            public boolean accept(File pathname) {
+                return pathname.getName().endsWith(".dat");
+            }
         });
-
-//        for (int i = 0; i < files.length; i++) {
-//            if (files[i].delete()) {
-//                System.out.println("Удалили файл - " + files[i].getName() + "\n");
-//            }
-//        }
 
         for (File file : files) {
             if (file.delete()) {
-                System.out.println("Удалили файл - " + file.getName() + "\n");
+                System.out.println("Удалили файл - " + file.getName());
             }
         }
     }
 
     public static void openZip(String nameZip, String pathWithSavedGames) {
 
-//        File zip = new File(pathWithSavedGames, nameZip);
-        File zip = new File("src\\InputOutput_Installation_Task1\\Games\\savegames\\zip_1.zip");
+        File zip = new File(pathWithSavedGames, nameZip);
+//        File zip = new File("src\\InputOutput_Installation_Task1\\Games\\savegames\\zip_1.zip");
         File path = new File(pathWithSavedGames);
 
         FileOutputStream writeSave = null;
@@ -136,17 +129,20 @@ public class Main {
 
             ZipEntry entry;
             while ((entry = zipInputStream.getNextEntry()) != null) {
-                File fileInZip = new File(path, ("\\" + entry.getName()));
+                File fileInZip = new File(path, entry.getName());
                 writeSave = new FileOutputStream(fileInZip);
 
                 byte[] buffer = new byte[4096];
-                int count;
-                while ((count = zipInputStream.read(buffer)) > -1) {
-                    writeSave.write(buffer, 0, count);
-                }
-//                zipInputStream.closeEntry();
-            }
+//                int count;
+//                while ((count = zipInputStream.read(buffer)) > 1) {
+//                    writeSave.write(buffer, 0, count);
+//                }
 
+                zipInputStream.read(buffer);
+                writeSave.write(buffer);
+
+                zipInputStream.closeEntry();
+            }
 
         } catch (IOException e) {
             System.out.println(e.getMessage());
@@ -160,24 +156,20 @@ public class Main {
             }
         }
     }
+
+    public static GameProgress openProgress(String pathWithSavedGames, String fileName) {
+        String pathFile = pathWithSavedGames + "\\" + fileName;
+        File fileWithSavedGame = new File(pathFile);
+        GameProgress gameProgress = null;
+
+        try (FileInputStream fileInputStream = new FileInputStream(fileWithSavedGame);
+             ObjectInputStream objectInputStream = new ObjectInputStream(fileInputStream)) {
+
+            gameProgress = (GameProgress) objectInputStream.readObject();
+        } catch (ClassNotFoundException | IOException e) {
+            System.out.println(e.getMessage());
+        }
+
+        return gameProgress;
+    }
 }
-
-
-
-
-
-
-
-/*Вопрос: в методе saveGame я не использовал РЕСУРСЫ. при закрытие потоков (потока записи в файл и потока сериализации): - имеет ли значение какой поток закрывать первым.
-*
-* Коряво получился метод zipFiles. Подскажите как можно его сделать по-другому.
-*
-* Можно ли в методе deleteDatFiles в цикле for each удалять элементы массива?
-*
-* Делал задачу 3. Не понимаю почему в методе openZip во 2ом цикле while не получается считать байты в массив buffer.
-* И вообще не понял как можно нормально распаковать архив. Объясните пожалуйста как это происходит.
-* Моё понимание такое:
-* 1-Создаю File для zip_1.zip
-* 2-Открываю поток чтения архива(ZIS) из потока чтения(FIS) из zip_1.zip
-* 3-Беру объект архива, считываю его байты в массив байтов.
-* И записываю их в созданный файл в директории (вот в этом пункте не понимаю как считать байты у объекта архива) */
